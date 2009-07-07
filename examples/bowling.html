@@ -11,20 +11,20 @@ Bowling.prototype.hit = function(n){
 	this.score += n;
 }
 
+describe('Bowling')
+	.beforeEach(function(){
+		this.bowling = new Bowling();
+	})
+	.should('score 0 for gutter game', function(){
+		for (var i = 0; i < 20; i++) this.bowling.hit(0);
+		expect(this.bowling.score).toBe(0);
+	})
+	.should('accumulate score', function(){
+		this.bowling.hit(20);
+		this.bowling.hit(10);
+		expect(this.bowling.score).toBe(30);
+	})
 $(function(){
-	describe('Bowling')
-		.beforeEach(function(){
-			this.bowling = new Bowling();
-		})
-		.should('score 0 for gutter game', function(){
-			for (var i = 0; i < 20; i++) this.bowling.hit(0);
-			expect(this.bowling.score).toBe(0);
-		})
-		.should('accumulate score', function(){
-			this.bowling.hit(20);
-			this.bowling.hit(10);
-			expect(this.bowling.score).toBe(30);
-		});
 	describe.outputOnto('log').run();
 });
 </script>
