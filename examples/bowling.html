@@ -1,8 +1,8 @@
 <html>
 <head><title>jQuery Style Examples</title>
 <link type="text/css" rel="stylesheet" href="../lib/jspec.css" />
-<script type="text/javascript" src="jquery.js"></script>
-<script type="text/javascript" src="jquery.bdd.js"></script>
+<script type="text/javascript" src="../lib/jquery.js"></script>
+<script type="text/javascript" src="../describe.js"></script>
 <script type="text/javascript">
 function Bowling(){
 	this.score = 0;
@@ -12,25 +12,20 @@ Bowling.prototype.hit = function(n){
 }
 
 $(function(){
-	$.describe('Bowling')
+	describe('Bowling')
 		.beforeEach(function(){
 			this.bowling = new Bowling();
 		})
 		.should('score 0 for gutter game', function(){
 			for (var i = 0; i < 20; i++) this.bowling.hit(0);
-			$t(this.bowling.score).shouldEqual(0);
+			expect(this.bowling.score).toBe(0);
 		})
 		.should('accumulate score', function(){
 			this.bowling.hit(20);
 			this.bowling.hit(10);
-			$t(this.bowling.score).shouldEqual(30);
+			expect(this.bowling.score).toBe(30);
 		});
-		
-		
-	$.specOutput = function(s){
-		$('#log').append(s + '\n');
-	}
-	$.runSpecs();
+	describe.outputOnto('log').run();
 });
 </script>
 </head>

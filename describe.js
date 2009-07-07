@@ -103,6 +103,12 @@ describe.output = function(msg){
   if (console && console.log)
     console.log(msg);
 }
+describe.outputOnto = function(id){
+  describe.output = function(msg){
+    document.getElementById(id).innerHTML += msg + '\n';
+  }
+  return describe;
+}
 describe.run = function(){
 	var specs = describe.specs;
 	for (var i = 0; i < specs.length; i++){
@@ -113,4 +119,5 @@ describe.run = function(){
             print(res.fail + ' failures.');
         }
 	}
+	return describe;
 }
