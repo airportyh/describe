@@ -1,7 +1,6 @@
 <html>
 <head><title>describe Examples</title>
 <link type="text/css" rel="stylesheet" href="../lib/jspec.css" />
-<script type="text/javascript" src="../lib/jquery.js"></script>
 <script type="text/javascript" src="../describe.js"></script>
 <script type="text/javascript">
 function Bowling(){
@@ -24,12 +23,9 @@ describe('Bowling')
 		this.bowling.hit(10);
 		expect(this.bowling.score).toBe(30);
 	})
-$(function(){
-	
-});
 </script>
 </head>
-<body>
+<body onload="describe.outputOnto('log').run()">
 <pre id="log"></pre>
 </body>
 </html>
