@@ -1,7 +1,6 @@
 <html>
 <head><title>describe Examples</title>
 <link type="text/css" rel="stylesheet" href="../lib/jspec.css" />
-<script type="text/javascript" src="../lib/jquery.js"></script>
 <script type="text/javascript" src="../describe.js"></script>
 <script type="text/javascript">
 Array.prototype.remove = function(i){
@@ -18,13 +17,9 @@ describe('array method .remove')
 		expect(this.array.remove(0, 1).length).toBe(1);
 	})
 
-$(function(){
-	describe.outputOnto('log');
-	describe.run();
-});
 </script>
 </head>
-<body>
+<body onload="describe.outputOnto('log').run()">
 <pre id="log"></pre>
 </body>
 </html>
