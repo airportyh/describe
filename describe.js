@@ -105,7 +105,7 @@ describe.output = function(msg){
 }
 describe.outputOnto = function(id){
   describe.output = function(msg){
-    document.getElementById(id).innerHTML += msg + '\n';
+    document.getElementById(id).innerHTML += msg + '<br>';
   }
   return describe;
 }
