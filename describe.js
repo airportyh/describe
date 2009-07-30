@@ -105,7 +105,11 @@ describe.output = function(msg){
 }
 describe.outputOnto = function(id){
   describe.output = function(msg){
-    document.getElementById(id).innerHTML += msg + '<br>';
+    function escape(s){
+      if (!s || s.length == 0) return s;
+      return s.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    }
+    document.getElementById(id).innerHTML += escape(msg) + '<br>';
   }
   return describe;
 }
