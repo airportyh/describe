@@ -90,7 +90,7 @@ function expect(one){
             throw new Error("Should have raised: " + msg);
           }catch(e){
             if (through) throw e;
-            else expect(e.message).toEqual(msg);
+            else if (msg !== undefined) expect(e.message).toEqual(msg);
           }
         }
     };
