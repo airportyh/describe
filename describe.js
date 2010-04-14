@@ -1,4 +1,4 @@
-function describe(name){
+describe = function(name){
 	function Spec(name){
 		this.name = name;
 		this.tests = {}
@@ -11,6 +11,15 @@ function describe(name){
 	Spec.prototype.beforeAll = function(f){
 		this.beforeAll = f;
 		return this;
+	}
+	Spec.prototype.afterEach = function(f){
+	    this.afterEach = f;
+	    return this;
+	}
+	Spec.prototype.after = Spec.prototype.afterEach;
+	Spec.prototype.afterAll = function(f){
+	    this.afterAll = f;
+	    return this
 	}
 	Spec.prototype.it = function(name, testFunc){
 		this.tests['it ' + name] = testFunc;
@@ -25,7 +34,7 @@ function describe(name){
 	return spec;
 }
 describe.specs = [];
-describe.runSpec = function(spec){
+describe.runSpec = function(spec, debug){
 	var totalRan = 0;
 	var failures = 0;
 	if (spec.beforeAll) spec.beforeAll();
@@ -33,23 +42,30 @@ describe.runSpec = function(spec){
         var sp = spec.clone;
         var context = {};
 		var testCase = spec.tests[caseName];
-		try{
+		function doit(){
 			if (spec.beforeEach) spec.beforeEach.apply(context);
 			testCase.apply(context);
-			if (spec.afterEach) spec.afterEach.apply(context);
-		}catch(e){
-            with({print: describe.output}){
-                print(spec.name + ' ' + caseName + ':');
-                print("\t" + e);
-            }
-			failures++;
 		}
+		if (debug){
+		    doit();
+		}else{
+    		try{
+    		    doit();
+    		}catch(e){
+                with({print: describe.output}){
+                    print(spec.name + ' ' + caseName + ':');
+                    print("\t" + e);
+                }
+    			failures++;
+    		}
+    	}  
+		if (spec.afterEach) spec.afterEach.apply(context);
 		totalRan++;
 	}
 	if (spec.afterAll) spec.afterAll();
 	return {total: totalRan, fail: failures};
 }
-function expect(one){
+function expect(one, context){
     return {
         toEqual: function(other){
             if ((one && one.constructor === Date) && 
@@ -85,7 +101,7 @@ function expect(one){
         toRaise: function(msg){
           var through = false;
           try{
-            one();
+            one.apply(context);
             through = true;
             throw new Error("Should have raised: " + msg);
           }catch(e){
@@ -113,11 +129,11 @@ describe.outputOnto = function(id){
   }
   return describe;
 }
-describe.run = function(){
+describe.run = function(debug){
 	var specs = describe.specs;
 	for (var i = 0; i < specs.length; i++){
 		var spec = specs[i];
-		var res = describe.runSpec(spec);
+		var res = describe.runSpec(spec, debug);
         with({print: describe.output}){
             print('Ran ' + res.total + ' specs for ' + spec.name + '.');
             print(res.fail + ' failures.');
