@@ -19,7 +19,7 @@ Example:
 	        expect(this.array).toEqual(['c'])
 	    })
 	
-Output:
+Example Passing Output:
 
     Ran 2 specs for remove().
 	0 failures.
