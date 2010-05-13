@@ -32,6 +32,7 @@ describe.Spec = function(name, options){
 	this.name = name
 	this.tests = []
 	this.results = []
+	this.next = 0
 }
 describe.Spec.prototype = {
     before: function(f){
@@ -70,39 +71,53 @@ describe.Spec.prototype = {
     	return this
     },
     run: function(){
-    	if (this.beforeAll) this.beforeAll()
-    	for (var i = 0; i < this.tests.length; i++){
-    		var testCase = this.tests[i]
-    		var context = testCase
-    		try{
-    			if (this.before) this.before.apply(context)
-    			testCase.testFunc()
-    			if (!testCase.options.async)
-    			    this.results[i] = new describe.TestResult()
-    			if (testCase.options.async){
-    			    var timeout = testCase.options.asyncTimeout || 1000
-    			    setTimeout((function(test){
-    			        return function(){
-    			            test.fail('Timed out')
-    			        }
-    			    })(testCase), timeout)
-    			}
-    		}catch(e){
-    			this.results[i] = new describe.TestResult(e)
-    		}    
-    		if (!testCase.options.async || this.results[i]){
-        		if (this.after) this.after.apply(context)
-    		}
-    	}
+    	if (this.next == 0 && this.beforeAll) this.beforeAll()
+    	
+    	while(this.next < this.tests.length){
+        	this.runOne(this.next)
+        	this.next++
+        	if (!this.results[this.next - 1])
+        	    break // wait for async test to finish
+        }
+    	    	
     	this.tryFinish()
+    },
+    runOne: function(idx){
+		var testCase = this.tests[idx]
+		var context = testCase
+		try{
+			if (this.before) this.before.apply(context)
+			testCase.testFunc()
+			if (!testCase.options.async)
+			    this.results[idx] = new describe.TestResult()
+			if (testCase.options.async){
+			    var timeout = testCase.options.asyncTimeout || 1000
+			    setTimeout((function(test){
+			        return function(){
+			            test.fail('Timed out')
+			        }
+			    })(testCase), timeout)
+			}
+		}catch(e){
+			this.results[idx] = new describe.TestResult(e)
+		}    
+		if (!testCase.options.async || this.results[idx]){
+    		if (this.after) this.after.apply(context)
+		}
     },
     printError: function(test, error){
         with(describe){
             print(this.name + ' ' + test.name + ':')
             if (error.message == 'Timed out')
                 print('    ' + error)
-            else
-                print(error.stack.split('\n').slice(0, 3).map(function(p){return '    ' + p}).join('\n'))
+            else{
+                print('    ' + error)
+                var lines = error.stack.split('\n')
+                if (lines[0] == String(error))
+                    lines = lines.slice(1)
+                lines = lines.slice(0, 3).map(function(p){return '    ' + p})
+                print(lines.join('\n'))
+            }
         }
     },
     tryFinish: function(){
@@ -114,7 +129,8 @@ describe.Spec.prototype = {
                     var idx = summary.failures[i]
                     var result = this.results[idx]
                     var test = this.tests[idx]
-                    this.printError(test, result.error)
+                    if (describe.showErrors)
+                        this.printError(test, result.error)
                 }
                 print('Ran ' + summary.total + ' specs for ' + this.name + '.')
                 print(summary.failures.length + ' failures.')
@@ -133,7 +149,7 @@ describe.Spec.prototype = {
     reportResult: function(idx, result){
         if (this.results[idx] == undefined){
             this.results[idx] = result
-            this.tryFinish()
+            this.run()
         }
     }
 }
@@ -237,7 +253,10 @@ describe.Assertion.prototype = {
                     throw e
             }
             else if (msg !== undefined){
-                this.test.expect(e.message).toEqual(msg)
+                if (this.test)
+                    this.test.expect(e.message).toEqual(msg)
+                else
+                    expect(e.message).toEqual(msg)
             }
         }
     }
@@ -254,6 +273,7 @@ describe.print = function(msg){
   if (console && console.log)
         console.log(msg);
 }
+describe.showErrors = true
 describe.run = function(options){
     var options = options || {}
     if ('printTo' in options)
@@ -268,6 +288,8 @@ describe.run = function(options){
         describe.print = options.print
     else
         describe.print = function(){}
+    if ('showErrors' in options)
+        describe.showErrors = options.showErrors
 	var specs = describe.specs;
 	for (var i = 0; i < specs.length; i++){
 		var spec = specs[i]

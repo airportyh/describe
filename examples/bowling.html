@@ -10,7 +10,7 @@ Bowling.prototype.hit = function(n){
 }
 
 describe('Bowling')
-	.beforeEach(function(){
+	.before(function(){
 		this.bowling = new Bowling();
 	})
 	.should('score 0 for gutter game', function(){
@@ -24,7 +24,7 @@ describe('Bowling')
 	})
 </script>
 </head>
-<body onload="describe.outputOnto('log').run()">
+<body onload="describe.run({printTo: 'log'})">
 <pre id="log"></pre>
 </body>
 </html>
