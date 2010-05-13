@@ -68,10 +68,10 @@ Spec Object methods
 -------------------
 
 ### should(description, *options*, function)
-Adds a test case to the spec. It takes the same *options* as the *describe* function.
+Adds a test case to the spec. It optionally takes the same *options* as the *describe* function - but if you don't provide any options, you can just leave them out(no need to provide a null or {}).
 
 ### it(description, *options*, function)
-Adds a test case to the spec. It takes the same *options* as the *describe* function.
+Adds a test case to the spec. It optionally takes the same *options* as the *describe* function - but if you don't provide any options, you can just leave them out(no need to provide a null or {}).
 
 ### before(function)
 Adds a setup function that executes before each test case in this spec.
