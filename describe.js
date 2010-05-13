@@ -102,7 +102,7 @@ describe.Spec.prototype = {
             if (error.message == 'Timed out')
                 print('    ' + error)
             else
-                print(error.stack.split('\n').slice(0, 4).map(function(p){return '    ' + p}).join('\n'))
+                print(error.stack.split('\n').slice(0, 3).map(function(p){return '    ' + p}).join('\n'))
         }
     },
     tryFinish: function(){

@@ -18,6 +18,24 @@ Example:
 	        expect(this.array.length).toBe(1)
 	        expect(this.array).toEqual(['c'])
 	    })
+	
+Output:
+
+    Ran 2 specs for remove().
+	0 failures.
+	
+Example Failing output:
+
+	remove() should remove single elements:
+	    Error: 3 is not the same object as 2
+	        at Object.toBe (file://localhost/Users/airportyh/Projects/github/describe/describe.js:218:21)
+	        at Object.testFunc (file://localhost/Users/airportyh/Projects/github/describe/examples/example.html:16:35)
+	remove() should remove multiple elements:
+	    Error: 3 is not the same object as 1
+	        at Object.toBe (file://localhost/Users/airportyh/Projects/github/describe/describe.js:218:21)
+	        at Object.testFunc (file://localhost/Users/airportyh/Projects/github/describe/examples/example.html:21:35)
+	Ran 2 specs for remove().
+	2 failures.
 		
 Async Example:
 --------------
