@@ -4,28 +4,27 @@
 <script type="text/javascript">
 
 function remove(arr, i, n){
-	return arr.splice(i, n || 1);
+  return arr.splice(i, n || 1);
 }
 
-describe('array method .remove')
-	.before(function(){
-		this.array = ['a', 'b', 'c'];
-		console.log(this.array)
-	})
-	.should('remove single elements', function(){
-	  console.log(this.array)
-	  remove(this.array, 0)
-		expect(this.array.length).toBe(2);
-	})
-	.should('remove multiple elements', function(){
-	  //console.log(this.array)
-	  remove(this.array, 0, 2)
-		expect(this.array.length).toBe(1);
-	})
+describe('remove()')
+    .before(function(){
+        this.array = ['a', 'b', 'c'];
+    })
+    .should('remove single elements', function(){
+        remove(this.array, 0)
+        expect(this.array.length).toBe(2);
+        expect(this.array).toEqual(['b', 'c'])
+    })
+    .should('remove multiple elements', function(){
+        remove(this.array, 0, 2)
+        expect(this.array.length).toBe(1)
+        expect(this.array).toEqual(['c'])
+    })
 
 </script>
 </head>
-<body onload="describe.outputOnto('log').run()">
+<body onload="describe.run({printTo: 'log'})">
 <pre id="log"></pre>
 </body>
 </html>

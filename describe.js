@@ -102,7 +102,7 @@ describe.Spec.prototype = {
             if (error.message == 'Timed out')
                 print('    ' + error)
             else
-                print(error.stack.split('\n').slice(0, 3).map(function(p){return '    ' + p}).join('\n'))
+                print(error.stack.split('\n').slice(0, 4).map(function(p){return '    ' + p}).join('\n'))
         }
     },
     tryFinish: function(){
@@ -205,7 +205,7 @@ describe.Assertion.prototype = {
           }
           e = this.test.expect(listRepr(one)).toEqual(listRepr(other))
         }
-        if (one != other)
+        else if (one != other)
             e = Error(one + " is not equal to " + other)
         if (this.test && this.test.options.async)
             this.test.reportResult(new describe.TestResult(e))
