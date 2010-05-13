@@ -35,7 +35,7 @@ Async Example:
 To Run the Specs:
 -----------------
 
-Describe outputs the results of the tests in plain text when run. To output to a DOM element by ID - 
+To run all specs described, call *describe.run()*. Describe outputs the results of the tests in plain text when run. To output to a DOM element by ID - 
 if you are running in a web browser:
 	
 	describe.run({printTo: 'log'})
