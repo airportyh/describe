@@ -264,7 +264,7 @@ describe.run = function(options){
             }
             document.getElementById(options.printTo).innerHTML += escape(msg) + '<br>';
         }
-    if ('print' in options)
+    else if ('print' in options)
         describe.print = options.print
     else
         describe.print = function(){}
