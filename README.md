@@ -62,7 +62,7 @@ you'd add individual fixtures or test cases to. It's signature is:
 These options apply to all test cases within this spec, but may be overriden in individual test cases.
 
 - async: (true or false), whether the test cases in this spec should be run async by default.
-- asyncTimeout: (number in milliseconds), applicable only for async tests, the max time to wait for a test to complete. If it does not complete within the specified time, it will fail with the "Timed out" error message. The default value is 1000, or 1 second.
+- asyncTimeout: (number in milliseconds), applicable only for async tests, the max time to wait for a test to complete. If it does not complete within the specified time, it will fail with the "Timed out" error message. The default value is 1000, or 1 second. If you provide this option, describe assumes *async* to be true.
 
 Spec Object methods
 -------------------
