@@ -101,7 +101,7 @@ Asserts that one is *equal to* other. The definition of *equal to* is as follows
 2. if one and other are Dates, they are equal when one.getTime() == other.getTime()
 3. if one and other are Arrays, they are equal when they have the same length and for all i, one[i] == other[i]
 4. if one and other are simple object literals, they are equal when they have the same JSON representation
-5. otherwise, one and other are equal if one == other
+5. otherwise, one and other are equal when one == other
 
 ### expect(function).toRaise(*errorMessage*)
 Asserts that a function, when executed will throw an error, optionally with a specified error message.
