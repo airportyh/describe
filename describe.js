@@ -185,9 +185,6 @@ describe.TestResult = function(error){
 }
 
 describe.specs = []
-describe.runSpec = function(spec){
-    spec.run()
-}
 describe.Assertion = function(test, one, context){
     this.test = test
     this.one = one
