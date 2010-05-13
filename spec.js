@@ -39,27 +39,64 @@ describe('Describe')
         }).toRaise('SomeError')
     })
     
-describe('Describe async tests', {async: true})
+describe('async tests', {async: true})
     .should('test async', function(){
         var self = this
         setTimeout(function(){
-            self.endTest()
+            self.finish()
         }, 300)
     })
     .should('fail async test', function(){
         var self = this
         setTimeout(function(){
             self.expect(1).toBe(2)
-            self.endTest()
+            self.finish()
         }, 300)
     })
-    /*
     .should('fail if timed out', function(){
         var self = this
         setTimeout(function(){
-            self.endTest()
+            self.finish()
         }, 2000)
     })
-    */
+    .should('be able to set time out', {asyncTimeout: 2000}, function(){
+        var self = this
+        setTimeout(function(){
+            self.finish()
+        }, 1500)
+    })
+    .should('check to equal', function(){
+        var self = this
+        setTimeout(function(){
+            self.expect([1,3]).toEqual([1,2])
+            self.finish()
+        }, 100)
+    })
+    
+describe('async tests 2')
+    .should('be able to set async at method-level', {async: true}, function(){
+        var self = this
+        setTimeout(function(){
+            self.finish()
+        }, 300)
+    })
+    .should('auto async when asyncTimeout is set', {asyncTimeout: 100}, function(){
+        var self = this
+        setTimeout(function(){
+            self.finish()
+        }, 50)
+    })
+    .should('expect raise', {async: true}, function(){
+        var self = this
+        setTimeout(function(){
+            self.expect(function(){ throw new Error('blah')}).toRaise('blah')
+        }, 300)
+    })
+    .should('expect raise fail', {async: true}, function(){
+        var self = this
+        setTimeout(function(){
+            self.expect(function(){}).toRaise('blah')
+        }, 300)
+    })
     
 describe.run({print: require('sys').puts})

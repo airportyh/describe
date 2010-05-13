@@ -51,20 +51,12 @@ describe.Spec.prototype = {
         return this
     },
     it: function(name, arg2, arg3){
-        var testFunc, options
-        if (typeof(arg2) == 'function'){
-            options = this.options
-            testFunc = arg2
-        }else if (typeof(arg2) == 'object'){
-            arg2.__proto__ = this.options
-            options = arg2
-            testFunc = arg3
-        }
-        var name = 'it ' + name
-    	this.tests.push(new describe.Test(this, this.tests.length, name, testFunc, options))
-    	return this;
+        return this.__newTest__('it ' + name, arg2, arg3)
     },
     should: function(name, arg2, arg3){
+        return this.__newTest__('should ' + name, arg2, arg3)
+    },
+    __newTest__: function(name, arg2, arg3){
         var testFunc, options
         if (typeof(arg2) == 'function'){
             options = this.options
@@ -74,7 +66,6 @@ describe.Spec.prototype = {
             options = arg2
             testFunc = arg3
         }
-        var name = 'should ' + name
     	this.tests.push(new describe.Test(this, this.tests.length, name, testFunc, options))
     	return this
     },
@@ -88,6 +79,14 @@ describe.Spec.prototype = {
     			testCase.testFunc()
     			if (!testCase.options.async)
     			    this.results[i] = new describe.TestResult()
+    			if (testCase.options.async){
+    			    var timeout = testCase.options.asyncTimeout || 1000
+    			    setTimeout((function(test){
+    			        return function(){
+    			            test.fail('Timed out')
+    			        }
+    			    })(testCase), timeout)
+    			}
     		}catch(e){
     			this.results[i] = new describe.TestResult(e)
     		}    
@@ -100,8 +99,10 @@ describe.Spec.prototype = {
     printError: function(test, error){
         with(describe){
             print(this.name + ' ' + test.name + ':')
-            //print("\t" + error)
-            print(error.stack.split('\n').slice(0, 3).map(function(p){return '    ' + p}).join('\n'))
+            if (error.message == 'Timed out')
+                print('    ' + error)
+            else
+                print(error.stack.split('\n').slice(0, 3).map(function(p){return '    ' + p}).join('\n'))
         }
     },
     tryFinish: function(){
@@ -144,9 +145,11 @@ describe.Test = function(spec, idx, name, func, options){
     this.name = name
     this.testFunc = func
     this.options = options || {}
+    if (this.options.asyncTimeout && !this.options.async)
+        this.options.async = true
 }
 describe.Test.prototype = {
-    endTest: function(){
+    finish: function(){
         this.spec.reportResult(this.idx, new describe.TestResult())
     },
     reportResult: function(result){
@@ -155,8 +158,8 @@ describe.Test.prototype = {
     expect: function(one, context){
         return new describe.Assertion(this, one, context)
     },
-    fail: function(){
-        
+    fail: function(reason){
+        this.spec.reportResult(this.idx, new describe.TestResult(new Error(reason)))
     }
 }
 
@@ -176,21 +179,22 @@ describe.Assertion = function(test, one, context){
 }
 describe.Assertion.prototype = {
     toEqual: function(other){
+        var e = null
         var one = this.one
         if ((one && one.constructor === Date) && 
             (other && other.constructor === Date)){
             one = one.getTime()
             other = other.getTime()
         }
-        if ((one && one.constructor === Array) && 
+        else if ((one && one.constructor === Array) && 
             (other && other.constructor === Array)){
-            if (one.length != other.length) throw new Error(one + " is not equal to " + other)
+            if (one.length != other.length)
+                error = new Error(one + " is not equal to " + other)
             for (var i = 0; i < one.length; i++)
                 if (one[i] != other[i])
-                    throw new Error(one + " is not equal to " + other)
-            return
+                    e = new Error(one + " is not equal to " + other)
         }
-        if ((one && one.constructor === Object) && 
+        else if ((one && one.constructor === Object) && 
             (other && other.constructor === Object)){
           function listRepr(obj){
             var ret = []
@@ -199,10 +203,14 @@ describe.Assertion.prototype = {
             }
             return ret
           }
-          expect(listRepr(one)).toEqual(listRepr(other))
-          return
+          e = this.test.expect(listRepr(one)).toEqual(listRepr(other))
         }
-        if (one != other) throw new Error(one + " is not equal to " + other)
+        if (one != other)
+            e = Error(one + " is not equal to " + other)
+        if (this.test && this.test.options.async)
+            this.test.reportResult(new describe.TestResult(e))
+        else
+            throw e
     },
     toBe: function(other){
         var one = this.one
@@ -222,8 +230,15 @@ describe.Assertion.prototype = {
             through = true
             throw new Error("Should have raised: " + msg)
         }catch(e){
-            if (through) throw e;
-            else if (msg !== undefined) expect(e.message).toEqual(msg)
+            if (through){
+                if (this.test && this.test.options.async)
+                    this.test.reportResult(new describe.TestResult(e))
+                else
+                    throw e
+            }
+            else if (msg !== undefined){
+                this.test.expect(e.message).toEqual(msg)
+            }
         }
     }
 }
@@ -241,13 +256,13 @@ describe.print = function(msg){
 }
 describe.run = function(options){
     var options = options || {}
-    if ('outputElement' in options)
+    if ('printTo' in options)
         describe.print = function(msg){
             function escape(s){
               if (!s || s.length == 0) return s;
               return s.replace(/</g, '&lt;').replace(/>/g, '&gt;')
             }
-            document.getElementById(id).innerHTML += escape(msg) + '<br>';
+            document.getElementById(options.printTo).innerHTML += escape(msg) + '<br>';
         }
     if ('print' in options)
         describe.print = options.print
