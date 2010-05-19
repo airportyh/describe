@@ -22,33 +22,43 @@ THE SOFTWARE.
 
 
 describe = function(name, options){
-	var spec = new describe.Spec(name, options)
+	var spec = new describe.Spec(describe.specs.length, name, options)
 	describe.specs.push(spec)
 	return spec
 }
 
-describe.Spec = function(name, options){
+describe.Spec = function(idx, name, options){
+    this.idx = idx
     this.options = options
 	this.name = name
 	this.tests = []
-	this.results = []
 	this.next = 0
 }
 describe.Spec.prototype = {
-    before: function(f){
-    	this.before = f
+    before: function(arg1, arg2){
+        var options, f
+        if (typeof(arg1) == 'function'){
+            f = arg1
+            options = this.options
+        }else if (typeof(arg1) == 'object'){
+            options = arg1
+            options.__proto__ = this.options
+            f = arg2
+        }
+        f.options = options || {}
+    	this._before = f
     	return this
     },
     beforeAll: function(f){
-    	this.beforeAll = f
+    	this._beforeAll = f
     	return this
     },
     after: function(f){
-        this.after = f
+        this._after = f
         return this
     },
     afterAll: function(f){
-        this.afterAll = f
+        this._afterAll = f
         return this
     },
     it: function(name, arg2, arg3){
@@ -71,39 +81,46 @@ describe.Spec.prototype = {
     	return this
     },
     run: function(){
-    	if (this.next == 0 && this.beforeAll) this.beforeAll()
-    	
-    	while(this.next < this.tests.length){
-        	this.runOne(this.next)
-        	this.next++
-        	if (!this.results[this.next - 1])
-        	    break // wait for async test to finish
+        if (this.next == 0){
+            //describe.print('begin: ' + this)
         }
-    	    	
-    	this.tryFinish()
+        //describe.print('run: ' + this)
+        /*
+        if ('async tests' == this.name || 'befores and afters async' == this.name){
+            try{
+                throw new Error("Blah")
+            }catch(e){
+                describe.print(e.stack)
+            }
+        }
+        */
+    	if (this.next == 0 && this._beforeAll)
+    	    this._beforeAll()
+    	
+    	this.runOne(this.next)
+    	//this.tryFinish()
+        if (this.finished && !this.handledFinish){
+            
+            this.handledFinish = true
+            //describe.print(this + ' is finished')   
+            describe.runNext()
+        }
+    },
+    runNext: function(){
+        this.next++
+        if (this.next >= this.tests.length){
+            this.tryFinish()
+            if (this.finished && !this.handledFinish){
+                this.handledFinish = true
+                describe.runNext()
+            }
+            return
+        }else
+            this.run()
     },
     runOne: function(idx){
 		var testCase = this.tests[idx]
-		var context = testCase
-		try{
-			if (this.before) this.before.apply(context)
-			testCase.testFunc()
-			if (!testCase.options.async)
-			    this.results[idx] = new describe.TestResult()
-			if (testCase.options.async){
-			    var timeout = testCase.options.asyncTimeout || 1000
-			    setTimeout((function(test){
-			        return function(){
-			            test.fail('Timed out')
-			        }
-			    })(testCase), timeout)
-			}
-		}catch(e){
-			this.results[idx] = new describe.TestResult(e)
-		}    
-		if (!testCase.options.async || this.results[idx]){
-    		if (this.after) this.after.apply(context)
-		}
+		testCase.start()
     },
     printError: function(test, error){
         with(describe){
@@ -123,65 +140,150 @@ describe.Spec.prototype = {
     tryFinish: function(){
         var summary = this.getSummary()
         if (summary){
-        	if (this.afterAll) this.afterAll()
+        	if (this._afterAll) this._afterAll()
             with(describe){
                 for (var i = 0; i < summary.failures.length; i++){
                     var idx = summary.failures[i]
-                    var result = this.results[idx]
                     var test = this.tests[idx]
+                    var result = test.result
                     if (describe.showErrors)
                         this.printError(test, result.error)
                 }
-                print('Ran ' + summary.total + ' specs for ' + this.name + '.')
+                print('Ran ' + summary.total + ' specs for ' + this + '.')
                 print(summary.failures.length + ' failures.')
+                describe.specDone[this.idx] = true
+                this.finished = true
             }
         }
     },
     getSummary: function(){
         var failures = []
         for (var i = 0; i < this.tests.length; i++){
-            var result = this.results[i]
+            var result = this.tests[i].result
             if (!result) return null
             if (!result.passed) failures.push(i)
         }
-        return {total: this.results.length, failures: failures}
+        return {total: this.tests.length, failures: failures}
     },
-    reportResult: function(idx, result){
-        if (this.results[idx] == undefined){
-            this.results[idx] = result
-            this.run()
-        }
+    toString: function(){
+        return 'Spec(' + this.name + ')'
     }
 }
-
 
 describe.Test = function(spec, idx, name, func, options){
     this.spec = spec
     this.idx = idx
     this.name = name
     this.testFunc = func
+    this.status = 0
     this.options = options || {}
     if (this.options.asyncTimeout && !this.options.async)
         this.options.async = true
-}
-describe.Test.prototype = {
-    finish: function(){
-        this.spec.reportResult(this.idx, new describe.TestResult())
-    },
-    reportResult: function(result){
-        this.spec.reportResult(this.idx, result)
-    },
-    expect: function(one, context){
-        return new describe.Assertion(this, one, context)
-    },
-    fail: function(reason){
-        this.spec.reportResult(this.idx, new describe.TestResult(new Error(reason)))
+    this.__proto__ = {
+        reportResult: function(result){
+            //describe.print(result + ',' + this)
+            if (this.result == undefined){
+                this.result = result
+                this.setState('done')
+                this.teardown()
+            }
+        },
+        setState: function(state){
+            this.state = state
+            this.__proto__.__proto__ = describe.Test.States[state]
+        },
+        run: function(){
+            //describe.print('Running test: ' + this)
+            var self = this
+		    this.setState('running')
+		    try{
+		        this.testFunc()
+            	if (this.options.async){
+        		    var timeout = this.options.asyncTimeout || 1000
+        		    setTimeout((function(test){
+        		        return function(){
+        		            self.fail('Timed out')
+        		        }
+        		    })(this), timeout)
+        		}else
+        		    this.reportResult(new describe.TestResult())
+	        }catch(e){
+	            if (!this.options.async)
+	                this.reportResult(new describe.TestResult(e))
+	        }
+        },
+        teardown: function(){
+            var self = this
+            if (this.spec._after){
+                this.setState('teardown')
+                this.spec._after.call(this)
+                if (!this.options.async)
+                    this.spec.runNext()
+            }else{
+                this.spec.runNext()
+            }
+        },
+        fail: function(reason){
+            this.reportResult(new describe.TestResult(new Error(reason)))
+        },
+        expect: function(one, context){
+            return new describe.Assertion(this, one, context)
+        },
+        toString: function(){
+            return this.spec.name + ' ' + this.name
+        },
+        __proto__: describe.Test.States.initial
     }
+}
+
+describe.Test.States = {
+    initial: {
+        start: function(){
+		    //describe.print('start: ' + this)
+            var self = this
+			if (this.spec._before){
+    			this.setState('setup')
+			    this.spec._before.call(this)
+    		    var timeout = this.options.asyncTimeout || 1000
+    		    setTimeout((function(test){
+    		        return function(){
+    		            self.fail('Timed out during setup')
+    		        }
+    		    })(this), timeout)
+			    if (!this.spec._before.options.async)
+			        this.run()
+			}else{
+			    this.run()
+			}
+        }
+    },
+    setup: {
+        finish: function(){
+            this.run()
+        }
+    },
+    running: {
+        finish: function(){
+            this.reportResult(new describe.TestResult())
+        }
+    },
+    done: {
+        finish: function(){}
+    },
+    teardown: {
+        finish: function(){
+            this.spec.runNext()
+        }
+    }
+    
 }
 
 describe.TestResult = function(error){
     this.error = error
     this.passed = !Boolean(this.error)
+}
+describe.TestResult.prototype.toString = function toString(){
+    return 'TestResult(' + this.error + ')'
 }
 
 describe.specs = []
@@ -220,10 +322,12 @@ describe.Assertion.prototype = {
         }
         else if (one != other)
             e = Error(one + " is not equal to " + other)
-        if (this.test && this.test.options.async)
-            this.test.reportResult(new describe.TestResult(e))
-        else
-            throw e
+        if (e != null){
+            if (this.test && this.test.options.async)
+                this.test.reportResult(new describe.TestResult(e))
+            else
+                throw e
+        }
     },
     toBe: function(other){
         var one = this.one
@@ -250,10 +354,11 @@ describe.Assertion.prototype = {
                     throw e
             }
             else if (msg !== undefined){
-                if (this.test)
+                if (this.test){
                     this.test.expect(e.message).toEqual(msg)
-                else
+                }else{
                     expect(e.message).toEqual(msg)
+                }
             }
         }
     }
@@ -271,6 +376,24 @@ describe.print = function(msg){
         console.log(msg);
 }
 describe.showErrors = true
+describe.runOneSpec = function(){
+	var res = spec.run()
+}
+describe.next = 0
+describe.specDone = []
+
+describe._run = function(){
+    if (this.next < this.specs.length){
+        var spec = this.specs[this.next]
+        spec.run()
+    }
+}
+
+describe.runNext = function(){
+    //describe.print('describe.runNext()')
+    this.next++
+    this._run()
+}
 describe.run = function(options){
     var options = options || {}
     if ('printTo' in options)
@@ -287,10 +410,6 @@ describe.run = function(options){
         describe.print = function(){}
     if ('showErrors' in options)
         describe.showErrors = options.showErrors
-	var specs = describe.specs;
-	for (var i = 0; i < specs.length; i++){
-		var spec = specs[i]
-		var res = spec.run()
-	}
+    this._run()
 	return describe
 }

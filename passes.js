@@ -1,7 +1,10 @@
-#! /usr/bin/env node
+if (typeof(require) != 'undefined'){
+    require.paths.unshift('./')
+    require('describe')
+}
 
-require.paths.unshift('./')
-require('describe')
+if (typeof(global) == 'undefined')
+    window.global = window
 
 describe('Describe')
     .should('check expect', function(){
@@ -46,7 +49,7 @@ describe('befores and afters')
     .should('beforeAll should be called once only', function(){
         expect(global.n).toBe(1)
     })
-    .should('beforeAll should be called once only', function(){
+    .should('beforeAll should be called once only (2)', function(){
         expect(global.n).toBe(2)
     })
     
@@ -55,7 +58,7 @@ describe('befores and afters async', {async: true})
     .beforeAll(function(){
         global.n = 0
     })
-    .before(function(){
+    .before({async: false}, function(){
         global.n++
     })
     .should('beforeAll should be called once only', function(){
@@ -65,7 +68,7 @@ describe('befores and afters async', {async: true})
             self.finish()
         })
     })
-    .should('beforeAll should be called once only', function(){
+    .should('beforeAll should be called once only (2)', function(){
         var self = this
         setTimeout(function(){
             self.expect(global.n).toBe(2)
@@ -92,29 +95,42 @@ describe('async tests 2')
         var self = this
         setTimeout(function(){
             self.expect(function(){ throw new Error('blah')}).toRaise('blah')
+            self.finish()
         }, 300)
     })
     
 describe('async tests 3', {async: true})
-    .before(function(){
-        global.m = 1
-        describe.print('before()')
+    .before({async: false}, function(){
+        global.n = 1
     })
     .should('not run in parallel', function(){
         var self = this
         setTimeout(function(){
-            self.expect(global.m).toBe(1)
-            global.m = 2
+            self.expect(global.n).toBe(1)
+            global.n = 2
             self.finish()
         }, 500)
     })
     .should('not run in parallel 2', function(){
         var self = this
         setTimeout(function(){
-            self.expect(global.m).toBe(1)
-            global.m = 2
+            self.expect(global.n).toBe(1)
+            global.n = 2
             self.finish()
         }, 100)
     }) 
     
-describe.run({print: require('sys').puts})
+describe('async setup')
+    .before({async: true}, function(){
+        var self = this
+        setTimeout(function(){
+            self.n = 1
+            self.finish()
+        }, 500)
+    })
+    .should('run after setup', function(){
+        expect(this.n).toBe(1)
+    })
+    
+if (typeof(require) != 'undefined')
+    describe.run({print: require('sys').puts})

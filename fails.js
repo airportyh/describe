@@ -46,6 +46,7 @@ describe('async tests 2')
         var self = this
         setTimeout(function(){
             self.expect(function(){}).toRaise('blah')
+            self.finish()
         }, 300)
     })
     
