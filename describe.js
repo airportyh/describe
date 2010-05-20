@@ -198,6 +198,7 @@ describe.Test = function(spec, idx, name, func, options){
 		    this.setState('running')
 		    try{
 		        this.testFunc()
+		        
             	if (this.options.async){
         		    var timeout = this.options.asyncTimeout || 1000
         		    setTimeout((function(test){
@@ -208,8 +209,7 @@ describe.Test = function(spec, idx, name, func, options){
         		}else
         		    this.reportResult(new describe.TestResult())
 	        }catch(e){
-	            if (!this.options.async)
-	                this.reportResult(new describe.TestResult(e))
+	            this.reportResult(new describe.TestResult(e))
 	        }
         },
         teardown: function(){
@@ -247,7 +247,8 @@ describe.Test.States = {
     		    var timeout = this.options.asyncTimeout || 1000
     		    setTimeout((function(test){
     		        return function(){
-    		            self.fail('Timed out during setup')
+    		            if (self.state == 'setup')
+    		                self.fail('Timed out during setup')
     		        }
     		    })(this), timeout)
 			    if (!this.spec._before.options.async)

@@ -132,5 +132,6 @@ describe('async setup')
         expect(this.n).toBe(1)
     })
     
+    
 if (typeof(require) != 'undefined')
     describe.run({print: require('sys').puts})

@@ -49,5 +49,10 @@ describe('async tests 2')
             self.finish()
         }, 300)
     })
-    
+
+describe('async error thrown', {async: true})
+    .should('display error', function(){
+        this.hutnesoa.hotuse
+    })
+        
 describe.run({print: require('sys').puts, showErrors: false})
