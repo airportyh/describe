@@ -1,0 +1,10 @@
+States
+======
+
+How to continue?
+1. inital - setup or running
+2. setup - running
+3. running - running
+4. done - teardown
+5. teardown - end
+

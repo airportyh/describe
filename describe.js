@@ -132,7 +132,8 @@ describe.Spec.prototype = {
                 var lines = error.stack.split('\n')
                 if (lines[0] == String(error))
                     lines = lines.slice(1)
-                lines = lines.slice(0, 3).map(function(p){return '    ' + p})
+                //lines = lines.slice(0, 3).map(function(p){return '    ' + p})
+                
                 print(lines.join('\n'))
             }
         }
@@ -243,7 +244,11 @@ describe.Test.States = {
             var self = this
 			if (this.spec._before){
     			this.setState('setup')
-			    this.spec._before.call(this)
+    			try{
+			        this.spec._before.call(this)
+			    }catch(e){
+			        this.reportResult(new describe.TestResult(e))
+			    }
     		    var timeout = this.options.asyncTimeout || 1000
     		    setTimeout((function(test){
     		        return function(){
@@ -305,10 +310,10 @@ describe.Assertion.prototype = {
         else if ((one && one.constructor === Array) && 
             (other && other.constructor === Array)){
             if (one.length != other.length)
-                error = new Error(one + " is not equal to " + other)
+                error = new Error("Expected " + other + " but got " + one)
             for (var i = 0; i < one.length; i++)
                 if (one[i] != other[i])
-                    e = new Error(one + " is not equal to " + other)
+                    e = new Error("Expected " + other + " but got " + one)
         }
         else if ((one && one.constructor === Object) && 
             (other && other.constructor === Object)){
@@ -322,7 +327,7 @@ describe.Assertion.prototype = {
           e = this.test.expect(listRepr(one)).toEqual(listRepr(other))
         }
         else if (one != other)
-            e = Error(one + " is not equal to " + other)
+            e = Error("Expected " + other + " but got " + one)
         if (e != null){
             if (this.test && this.test.options.async)
                 this.test.reportResult(new describe.TestResult(e))
@@ -333,7 +338,7 @@ describe.Assertion.prototype = {
     toBe: function(other){
         var one = this.one
         if (one !== other){
-            var e = new Error(one + " is not the same object as " + other)
+            var e = new Error("Expected " + other + " but got " + one)
             if (this.test && this.test.options.async)
                 this.test.reportResult(new describe.TestResult(e))
             else
