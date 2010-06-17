@@ -345,6 +345,16 @@ describe.Assertion.prototype = {
                 throw e
         }
     },
+    notToBe: function(other){
+        var one = this.one
+        if (one === other){
+            var e = new Error("Expected not " + other + " but got " + one)
+            if (this.test && this.test.options.async)
+                this.test.reportResult(new describe.TestResult(e))
+            else
+                throw e
+        }
+    },
     toRaise: function(msg){
         var one = this.one
         var through = false
