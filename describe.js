@@ -324,7 +324,10 @@ describe.Assertion.prototype = {
             }
             return ret
           }
-          e = this.test.expect(listRepr(one)).toEqual(listRepr(other))
+          if (this.test)
+            e = this.test.expect(listRepr(one)).toEqual(listRepr(other))
+          else
+            expect(listRepr(one)).toEqual(listRepr(other))
         }
         else if (one != other)
             e = Error("Expected " + other + " but got " + one)
